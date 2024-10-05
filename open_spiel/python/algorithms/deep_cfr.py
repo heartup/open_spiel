@@ -263,7 +263,8 @@ class DeepCFRSolver(policy.Policy):
   def solve(self):
     """Solution logic for Deep CFR."""
     advantage_losses = collections.defaultdict(list)
-    for _ in range(self._num_iterations):
+    for i_n in range(self._num_iterations):
+      print(f'iteration: {i_n}')
       for p in range(self._num_players):
         for _ in range(self._num_traversals):
           self._traverse_game_tree(self._root_node, p)
@@ -410,6 +411,7 @@ class DeepCFRSolver(policy.Policy):
               self._advantage_ph[player]: np.array(advantages),
               self._iter_ph: np.array(iterations),
           })
+      print(f'adv loss of {player}: {loss_advantages}')
     return loss_advantages
 
   def _learn_strategy_network(self):
@@ -441,4 +443,5 @@ class DeepCFRSolver(policy.Policy):
               self._action_probs_ph: np.array(np.squeeze(action_probs)),
               self._iter_ph: np.array(iterations),
           })
+      print(f'pi loss {loss_strategy}')
     return loss_strategy

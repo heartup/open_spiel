@@ -58,7 +58,7 @@ set -e  # exit when any command fails
 MYDIR="$(dirname "$(realpath "$0")")"
 source "${MYDIR}/global_variables.sh"
 
-CXX=${CXX:-`which clang++`}
+CXX=${CXX:-`which c++`}
 if [ ! -x $CXX ]
 then
   echo -n "clang++ not found (the clang C++ compiler is needed to "

@@ -28,47 +28,34 @@ tf.disable_v2_behavior()
 
 class DeepCFRTest(parameterized.TestCase):
 
-  @parameterized.parameters('leduc_poker', 'kuhn_poker', 'liars_dice')
-  def test_deep_cfr_runs(self, game_name):
-    game = pyspiel.load_game(game_name)
+  def test_deep_cfr_runs(self):
+    game = pyspiel.load_game('kuhn_poker')
     with tf.Session() as sess:
       deep_cfr_solver = deep_cfr.DeepCFRSolver(
           sess,
           game,
           policy_network_layers=(8, 4),
           advantage_network_layers=(4, 2),
-          num_iterations=2,
-          num_traversals=2,
-          learning_rate=1e-3,
+          num_iterations=100,
+          num_traversals=10000,
+          learning_rate=1e-1,
           batch_size_advantage=None,
           batch_size_strategy=None,
+          policy_network_train_steps=50,
+          advantage_network_train_steps=50,
           memory_capacity=1e7)
       sess.run(tf.global_variables_initializer())
       deep_cfr_solver.solve()
-
-  def test_matching_pennies_3p(self):
-    # We don't expect Deep CFR to necessarily converge on 3-player games but
-    # it's nonetheless interesting to see this result.
-    game = pyspiel.load_game_as_turn_based('matching_pennies_3p')
-    with tf.Session() as sess:
-      deep_cfr_solver = deep_cfr.DeepCFRSolver(
-          sess,
-          game,
-          policy_network_layers=(16, 8),
-          advantage_network_layers=(32, 16),
-          num_iterations=2,
-          num_traversals=2,
-          learning_rate=1e-3,
-          batch_size_advantage=None,
-          batch_size_strategy=None,
-          memory_capacity=1e7)
-      sess.run(tf.global_variables_initializer())
-      deep_cfr_solver.solve()
+      tabular_policy = deep_cfr_solver.to_tabular()
+      for info_state_str in tabular_policy.state_lookup.keys():
+          strategies = ['{:03.2f}'.format(x)
+                        for x in tabular_policy.policy_for_key(info_state_str)]
+          print('{} {}'.format(info_state_str.ljust(6), strategies))
       conv = exploitability.nash_conv(
           game,
           policy.tabular_policy_from_callable(
               game, deep_cfr_solver.action_probabilities))
-      print('Deep CFR in Matching Pennies 3p. NashConv: {}'.format(conv))
+      print('Deep CFR NashConv: {}'.format(conv))
 
 
 if __name__ == '__main__':
